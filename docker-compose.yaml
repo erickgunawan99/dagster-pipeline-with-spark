@@ -1,0 +1,118 @@
+services:
+ 
+  dagster:
+    build:
+      context: .
+      dockerfile: Dockerfile.dagster
+    container_name: dagster_app
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000"]
+    environment:
+
+      DAGSTER_HOME: /opt/dagster/dagster_home
+    networks:
+      - dagster_network
+    volumes:
+      # Access to Host Docker Socket for 'docker exec'
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Shared Spark scripts
+      - ./spark_scripts:/opt/spark/jobs
+      # Local dbt project
+      - ./dbt_project:/opt/dagster/app/my_dbt_project
+      # The "Database" - Persistent storage for SQLite and DuckDB files
+      - ./storage:/opt/dagster/storage
+      - .:/opt/dagster/app
+    ports:
+      - "3000:3000"
+  dagster_daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile.dagster
+    networks: 
+      - dagster_network
+    container_name: dagster_daemon
+    # The Daemon runs this command instead of the webserver
+    command: ["dagster-daemon", "run"]
+    restart: always
+    environment:
+      DAGSTER_HOME: /opt/dagster/dagster_home
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./spark_scripts:/opt/spark/jobs
+      - ./dbt_project:/opt/dagster/app/my_dbt_project
+      - .:/opt/dagster/app
+      - ./storage:/opt/dagster/storage
+    depends_on:
+      - dagster
+
+  # --- COMPUTE LAYER (The Permanent Spark Cluster) ---
+  spark-master:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_MEMORY=500m
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    networks:
+      - dagster_network
+    volumes:
+      - ./spark_scripts:/opt/spark/jobs
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+
+  spark-worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile.spark
+    container_name: spark-worker
+    environment:
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=1g
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    networks:
+      - dagster_network
+    depends_on:
+      - spark-master
+  
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minio123
+      MINIO_ROOT_PASSWORD: minio123
+    command: ["server", "--console-address", ":9001", "/data"]
+    networks:
+      - dagster_network
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+  minio-setup:
+    image: minio/mc:latest
+    container_name: minio-setup
+    depends_on:
+      - minio
+    networks:
+      - dagster_network
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set myminio http://minio:9000 minio123 minio123) do echo 'Waiting for MinIO...' && sleep 2; done;
+      /usr/bin/mc mb --ignore-existing myminio/raw-data;
+      /usr/bin/mc mb --ignore-existing myminio/silver;
+      /usr/bin/mc mb --ignore-existing myminio/dagster-pipes-metadata;
+      /usr/bin/mc anonymous set download myminio/raw-data;
+      echo 'Buckets created successfully';
+      exit 0;
+      "
+  
+volumes:
+  minio_data:
+
+networks:
+  dagster_network:
+    driver: bridge

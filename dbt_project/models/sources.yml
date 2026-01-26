@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: dagster
+    loader: pyspark
+    description: "Data processed by Spark and stored in MinIO"
+    tables:
+      - name: silver_policy
+        description: "The flattened policies created by Spark"
+        meta:
+          external_location: "s3a://silver/policy/*/*.parquet"
+
+      - name: silver_claim
+        description: "The cleaned claims created by Spark"
+        meta:
+          external_location: "s3a://silver/claim/*/*.parquet"

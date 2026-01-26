@@ -1,0 +1,27 @@
+# Using Apache Spark 3.5.3 as base
+FROM apache/spark:3.5.3-python3
+USER root
+
+ENV PATH="$PATH:/opt/spark/bin"
+
+# Install dependencies for downloading JARs
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    dagster-pipes \
+    boto3
+
+# 1. Download Hadoop-AWS and AWS SDK Bundle
+# These must match your Hadoop version (Spark 3.5.3 uses Hadoop 3.3.4)
+RUN curl -o /opt/spark/jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
+    curl -o /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+
+# 2. Setup directory and user
+RUN mkdir -p /opt/spark/jobs /opt/spark/work && \
+    chmod -R 777 /opt/spark/work && \
+    chown -R spark:spark /opt/spark/jobs
+
+# Switch to the default 'spark' user provided by the base image
+USER spark
+WORKDIR /opt/spark/jobs

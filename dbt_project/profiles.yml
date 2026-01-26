@@ -1,0 +1,16 @@
+insurance_profile:
+  outputs:
+    dev:
+      type: duckdb
+      path: '/opt/dagster/storage/insurance_analytics.duckdb'
+      config:
+        threads: 1
+        retries: 5
+        connect_timeout: 30
+      settings:
+        s3_endpoint: 'minio:9000'
+        s3_access_key_id: 'minio123'
+        s3_secret_access_key: 'minio123'
+        s3_use_ssl: false
+        s3_url_style: 'path'
+  target: dev

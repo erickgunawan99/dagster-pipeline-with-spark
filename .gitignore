@@ -1,0 +1,9 @@
+/.venv-1
+pyproject.toml
+/my_dbt_project
+/dagster_project/__pycache__
+/dbt_project/logs
+/dbt_project/target
+/storage/history
+/storage/schedules
+/storage/insurance_analytics.duckdb

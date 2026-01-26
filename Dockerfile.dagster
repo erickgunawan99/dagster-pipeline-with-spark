@@ -1,0 +1,33 @@
+FROM python:3.10-slim
+
+# Install system dependencies for dbt and networking
+RUN apt-get update && apt-get install -y \
+    git \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the Dagster Home directory (important for dagster.yaml)
+ENV DAGSTER_HOME=/opt/dagster/dagster_home
+RUN mkdir -p $DAGSTER_HOME
+# Add this line to your Dagster Dockerfile
+RUN apt-get update && apt-get install -y docker.io
+# Install Dagster and required integration libraries
+RUN pip install \
+    dagster \
+    dagster-webserver \
+    dagster-postgres \
+    dagster-docker \
+    boto3 \
+    dagster-pipes \
+    dagster-dbt \
+    dagster-aws \
+    dbt-duckdb
+
+WORKDIR /opt/dagster/app
+
+# Copy your configuration files
+COPY dagster.yaml $DAGSTER_HOME/
+COPY workspace.yaml .
+
+EXPOSE 3000
