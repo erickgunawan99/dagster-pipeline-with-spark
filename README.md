@@ -33,7 +33,6 @@ flowchart TD
         M["Fact(fct_claim ← from int_claim_details)"]
         K --> M
         H --> M
-        
     end
 
     classDef manual fill:#ffebee,stroke:#333,stroke-width:2px,color:#333
