@@ -17,7 +17,7 @@ flowchart TD
 
     subgraph "Dagster trigger dbt build (DuckDB) after spark finished"
         J["Staging -> stg_claim ← external claims_parquet]
-        J["Staging -> stg_policy ← external policies_parquet)"]
+        J["Staging -> stg_policy ← external policies_parquet]
 
         F --> J
         G --> J
