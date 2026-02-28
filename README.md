@@ -18,7 +18,8 @@ flowchart TD
         SP -->|Outputs to| G[(silver_policy parquet bucket)]
     end
 
-    subgraph ["Dagster Trigger → dbt build (after Spark finished)"] --> I["dbt-DuckDB (Build Star Schema)"]
+    subgraph "Dagster Trigger → dbt build (after Spark finished)"
+        I["dbt-DuckDB (Build Star Schema)"]
     end
 
     subgraph "dbt Modeling (DuckDB)"
