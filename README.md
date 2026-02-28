@@ -17,8 +17,8 @@ flowchart TD
     end
 
     subgraph "Dagster trigger dbt build (DuckDB) after spark finished"
-        J["Staging -> stg_claim ← external claims_parquet]
-        H["Staging -> stg_policy ← external policies_parquet]
+        J["Staging -> stg_claim ← external claims_parquet"]
+        H["Staging -> stg_policy ← external policies_parquet"]
 
         F --> J
         G --> H
@@ -28,7 +28,7 @@ flowchart TD
         J --> K
         H --> K
 
-        H --> L|Derived from stg_policy| L["Dimensions(dim_beneficiary, dim_asset, dim_policy_holder, dim_policy)"]
+        H -->|Derived from stg_policy| L["Dimensions(dim_beneficiary, dim_asset, dim_policy_holder, dim_policy)"]
 
         M["Fact(fct_claim ← from int_claim_details)"]
         K --> M
