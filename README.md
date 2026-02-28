@@ -2,8 +2,8 @@
 
 ```mermaid
 flowchart TD
-    A["Manual Upload\nClaims JSON → claims bucket"] --> B[(claims_json bucket)]
-    P["Manual Upload\nPolicies JSON → policies bucket"] --> Q[(policies_json bucket)]
+    A["Manual Upload Claims JSON → claims bucket"] --> B[(claims_json bucket)]
+    P["Manual Upload Policies JSON → policies bucket"] --> Q[(policies_json bucket)]
 
     subgraph "Dagster Orchestration"
         CS["claim_sensor\n(Monitors claims bucket)"] -.->|File arrives| B
@@ -15,11 +15,9 @@ flowchart TD
         SE -->|Outputs to| F[(claims_parquet bucket)]
         SP -->|Outputs to| G[(policies_parquet bucket)]
 
-        H["Dagster Trigger\n(After both Spark jobs complete)"] --> I["dbt-DuckDB Run\n(Build Star Schema)"]
-    end
-
-    subgraph "dbt Modeling (DuckDB)"
-        J["Staging\n(stg_claim ← external claims_parquet\nstg_policy ← external policies_parquet)"]
+    subgraph "Dagster trigger dbt build (DuckDB) after spark finished"
+        J["Staging -> stg_claim ← external claims_parquet]
+        J["Staging -> stg_policy ← external policies_parquet)"]
 
         F --> J
         G --> J
