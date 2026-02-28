@@ -14,6 +14,7 @@ flowchart TD
 
         SE -->|Outputs to| F[(claims_parquet bucket)]
         SP -->|Outputs to| G[(policies_parquet bucket)]
+    end
 
     subgraph "Dagster trigger dbt build (DuckDB) after spark finished"
         J["Staging -> stg_claim ← external claims_parquet]
