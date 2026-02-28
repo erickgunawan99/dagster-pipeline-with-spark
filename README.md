@@ -2,39 +2,44 @@
 
 ```mermaid
 flowchart TD
-    A["Manual Data Upload\n(Nested JSON: Claims & Policies)"] -->|Upload to MinIO Buckets| B[(MinIO Buckets\nclaims_json & policies_json)]
+    A["Manual Upload\nClaims JSON → claims bucket"] --> B[(claims_json bucket)]
+    P["Manual Upload\nPolicies JSON → policies bucket"] --> Q[(policies_json bucket)]
 
     subgraph "Dagster Orchestration"
-        C["Dagster Sensors\n(Monitor MinIO Buckets)"] -->|File Detected| D["Dagster Run\n(PipeSubprocessClient + PipeS3ContextInjector + PipeS3MessageReader)"]
-        
-        D -->|Hand off & Show Logs in UI| E["Spark Job\n(Unpack nested JSON → Write Parquet)"]
-        
-        E -->|Claims JSON| F[(claims_parquet)]
-        E -->|Policies JSON| G[(policies_parquet)]
-        
-        H["Dagster Trigger\n(After Spark Jobs Complete)"] --> I["dbt-DuckDB Run\n(Build Star Schema)"]
+        CS["claim_sensor\n(Monitors claims bucket)"] -.->|File arrives| B
+        PS["policy_sensor\n(Monitors policies bucket)"] -.->|File arrives| Q
+
+        CS -->|Triggers| SE["Spark Job - Claims\n(Unnest JSON → Write Parquet)"]
+        PS -->|Triggers| SP["Spark Job - Policies\n(Unnest JSON → Write Parquet)"]
+
+        SE -->|Outputs to| F[(claims_parquet bucket)]
+        SP -->|Outputs to| G[(policies_parquet bucket)]
+
+        H["Dagster Trigger\n(After both Spark jobs complete)"] --> I["dbt-DuckDB Run\n(Build Star Schema)"]
     end
 
-    B -.->|Monitored by sensors| C
-
     subgraph "dbt Modeling (DuckDB)"
-        J["Staging Models\n(stg_claim ← external claims_parquet\nstg_policy ← external policies_parquet)"] --> K["Intermediate Model\n(int_claim_details: JOIN stg_claim + stg_policy)"]
-        
-        J -->|Derived from stg_policy| L["Dimension Models\n(dim_beneficiary  dim_asset  dim_policy_holder  dim_policy)"]
-        
-        K --> M["Fact Model\n(fct_claim ← from int_claim_details)"]
+        J["Staging\n(stg_claim ← external claims_parquet\nstg_policy ← external policies_parquet)"]
+
+        F --> J
+        G --> J
+
+        J --> K["Intermediate\n(int_claim_details: JOIN stg_claim + stg_policy)"]
+
+        J -->|Derived from stg_policy| L["Dimensions\n(dim_beneficiary\n dim_asset\n dim_policy_holder\n dim_policy)"]
+
+        K --> M["Fact\n(fct_claim ← from int_claim_details)"]
     end
 
     I --> J
 
-    classDef manual fill:#f9d7da,stroke:#333
-    classDef storage fill:#fff3cd,stroke:#333
-    classDef dagster fill:#d4f4dd,stroke:#333
-    classDef spark fill:#ffe5cc,stroke:#333
-    classDef dbt fill:#cce5ff,stroke:#333
+    classDef manual fill:#ffebee,stroke:#333,stroke-width:2px,color:#333
+    classDef storage fill:#fffde7,stroke:#333,stroke-width:2px,color:#333
+    classDef dagster fill:#e0f7fa,stroke:#333,stroke-width:2px,color:#333
+    classDef spark fill:#fff3e0,stroke:#333,stroke-width:2px,color:#333
+    classDef dbt fill:#e3f2fd,stroke:#333,stroke-width:2px,color:#333
 
-    class A manual
-    class B,F,G storage
-    class C,D,H dagster
-    class E spark
-    class I,J,K,L,M dbt
+    class A,P manual
+    class B,Q,F,G storage
+    class CS,PS,SE,SP,H dagster
+    class J,K,L,M dbt
