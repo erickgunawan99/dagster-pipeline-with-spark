@@ -22,11 +22,11 @@ flowchart TD
         F --> J
         G --> J
 
-        J --> K["Intermediate\n(int_claim_details: JOIN stg_claim + stg_policy)"]
+        J --> K["Intermediate (int_claim_details: JOIN stg_claim + stg_policy)"]
 
-        J -->|Derived from stg_policy| L["Dimensions\n(dim_beneficiary\n dim_asset\n dim_policy_holder\n dim_policy)"]
+        J -->|Derived from stg_policy| L["Dimensions(dim_beneficiary, dim_asset, dim_policy_holder, dim_policy)"]
 
-        K --> M["Fact\n(fct_claim ← from int_claim_details)"]
+        K --> M["Fact(fct_claim ← from int_claim_details)"]
     end
 
     I --> J
@@ -40,4 +40,4 @@ flowchart TD
     class A,P manual
     class B,Q,F,G storage
     class CS,PS,SE,SP,H dagster
-    class J,K,L,M dbt
+    class J,K,L,M
