@@ -14,15 +14,16 @@ flowchart TD
         CS -->|Triggers| SE["Spark Job - Claims (Unnest JSON → Parquet)"]
         PS -->|Triggers| SP["Spark Job - Policies (Unnest JSON → Parquet)"]
 
-        SE -->|Outputs to| F[(claims_parquet bucket)]
-        SP -->|Outputs to| G[(policies_parquet bucket)]
+        SE -->|Outputs to| F[(silver_claim parquet bucket)]
+        SP -->|Outputs to| G[(silver_policy parquet bucket)]
+    end
 
-        H["Dagster Trigger → dbt build (after Spark finished)"] --> I["dbt-DuckDB (Build Star Schema)"]
+    subgraph ["Dagster Trigger → dbt build (after Spark finished)"] --> I["dbt-DuckDB (Build Star Schema)"]
     end
 
     subgraph "dbt Modeling (DuckDB)"
-        J["Staging: stg_claim ← external claims_parquet"]
-        H2["Staging: stg_policy ← external policies_parquet"]
+        J["Staging: stg_claim ← external silver_claim"]
+        H2["Staging: stg_policy ← external silver_policy"]
 
         F --> J
         G --> H2
