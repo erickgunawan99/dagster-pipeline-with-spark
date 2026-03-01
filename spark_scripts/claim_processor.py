@@ -73,7 +73,7 @@ def main():
                 F.col("payout"),
                 F.to_date(F.col("event_date")).alias("claim_event_date")
             )
-            # 5. Write the final OBT to MinIO Silver Layer
+            # 5. Write to parquet to MinIO bucket
             clean_claims_df.write \
                 .mode("append") \
                 .partitionBy("claim_event_date") \

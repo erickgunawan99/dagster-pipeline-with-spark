@@ -141,7 +141,7 @@ def main():
                 ).alias("policy_holder_beneficiary_state")
             )
 
-            # 5. Write the final OBT to MinIO Silver Layer
+            # 5. Write to parquet to MinIO bucket
             parse_policy_df.write \
                 .mode("append") \
                 .partitionBy("asset_type") \

@@ -5,7 +5,7 @@ with claims as (
     select * from {{ ref('stg_claim') }}
 ),
 policies as (
-    select * from {{ ref('fct_policy') }}
+    select * from {{ ref('dim_policy') }}
 )
 
 select
